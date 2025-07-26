@@ -1,63 +1,89 @@
-
 const affiliateID = "17337560220";
 let generatedLink = "";
-const commissionRates = { "fashion": 10, "electronics": 5, "beauty": 15, "home": 8, "default": 5 };
+const commissionRates = {
+  "fashion": 10,
+  "electronics": 5,
+  "beauty": 15,
+  "home": 8,
+  "default": 5
+};
 
 async function generateLink() {
   let originalLink = document.getElementById("productLink").value.trim();
-  if (!originalLink.includes("shopee")) {
-    alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
+  if (!originalLink) {
+    alert("⚠️ Vui lòng dán link sản phẩm Shopee!");
     return;
   }
 
-  let fullLink = await resolveShortLink(originalLink);
+  // Nếu là link rút gọn (shp.ee), giải mã
+  if (originalLink.includes("shp.ee")) {
+    originalLink = await resolveShortLink(originalLink);
+    console.log("Link sau khi giải mã:", originalLink);
+  }
+
+  // Kiểm tra lại sau khi giải mã
+  if (!originalLink.includes("shopee.vn")) {
+    document.getElementById("result").innerText = "⚠️ Hãy nhập đúng link sản phẩm Shopee!";
+    return;
+  }
+
+  // Tạo link Affiliate
   if (originalLink.includes("?")) {
-    generatedLink = fullLink + "&aff_id=" + affiliateID;
+    generatedLink = originalLink + `&aff_id=${affiliateID}`;
   } else {
-    generatedLink = fullLink + "?aff_id=" + affiliateID;
+    generatedLink = originalLink + `?aff_id=${affiliateID}`;
   }
 
-  let res = await fetch(`/api/get-price?url=${encodeURIComponent(fullLink)}`);
-  let data = await res.json();
-  let price = data.price || 0;
+  // Gọi API lấy giá
+  try {
+    const response = await fetch(`/api/get-price?url=${encodeURIComponent(originalLink)}`);
+    const data = await response.json();
 
-  if (price === 0) {
-    alert("⚠️ Không thể lấy giá. Vui lòng kiểm tra link!");
+    const price = data.price || 0;
+    const category = detectCategory(originalLink);
+    const rate = commissionRates[category] || commissionRates["default"];
+    const commission = Math.round((price * rate) / 100);
+
+    // Hiển thị kết quả
+    document.getElementById("result").innerHTML = `
+      ✅ Link Affiliate đã tạo:<br>
+      <a href="${generatedLink}" target="_blank">${generatedLink}</a>
+    `;
+    document.getElementById("details").innerHTML = `
+      🔍 Giá thực tế: ${price.toLocaleString()} VNĐ<br>
+      🏷️ Danh mục: ${category}<br>
+      💰 Hoa hồng ước tính: ${commission.toLocaleString()} VNĐ (${rate}%)
+    `;
+    document.getElementById("copyBtn").style.display = "inline-block";
+
+  } catch (err) {
+    console.error("Lỗi khi lấy thông tin sản phẩm:", err);
+    document.getElementById("result").innerText = "❌ Không thể lấy thông tin sản phẩm. Hãy thử lại!";
   }
-
-  let category = detectCategory(fullLink);
-  let commissionRate = commissionRates[category] || commissionRates["default"];
-  let estimatedCommission = (commissionRate * price) / 100;
-
-  document.getElementById("result").innerHTML = `
-    ✅ Link Affiliate đã tạo:<br>
-    <a href="${generatedLink}" target="_blank">${generatedLink}</a>
-  `;
-  document.getElementById("details").innerHTML = `
-    🔍 Giá thực tế: ${price.toLocaleString()} VNĐ<br>
-    🏷️ Danh mục: ${category}<br>
-    💰 Hoa hồng ước tính: ${estimatedCommission.toLocaleString()} VNĐ (${commissionRate}%)
-  `;
-  document.getElementById("copyBtn").style.display = "inline-block";
 }
 
+// Giải mã link rút gọn như shp.ee
 async function resolveShortLink(shortUrl) {
   try {
-    let response = await fetch(shortUrl, { method: "HEAD", redirect: "follow" });
+    const response = await fetch(shortUrl, { method: "HEAD", redirect: "follow" });
     return response.url;
-  } catch (error) {
-    return shortUrl;
+  } catch (err) {
+    console.error("Lỗi giải mã link rút gọn:", err);
+    return shortUrl; // fallback
   }
 }
 
+// Phân loại danh mục sản phẩm
 function detectCategory(link) {
-  if (link.includes("fashion")) return "fashion";
-  if (link.includes("electronics")) return "electronics";
-  if (link.includes("beauty")) return "beauty";
-  if (link.includes("home")) return "home";
+  const l = link.toLowerCase();
+  if (l.includes("thoi-trang") || l.includes("fashion")) return "fashion";
+  if (l.includes("dien-tu") || l.includes("electronics")) return "electronics";
+  if (l.includes("lam-dep") || l.includes("beauty")) return "beauty";
+  if (l.includes("nha-cua") || l.includes("home")) return "home";
   return "default";
 }
 
+// Copy link affiliate
 function copyLink() {
   navigator.clipboard.writeText(generatedLink).then(() => {
     alert("📋 Link đã được copy!");
