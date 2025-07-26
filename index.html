@@ -51,6 +51,9 @@
 
       // Lấy giá và thông tin
       let price = await scrapePrice(fullLink);
+      if (price === 0) {
+        alert("⚠️ Không thể lấy giá. Vui lòng kiểm tra link hoặc dùng link đầy đủ!");
+      }
       let category = detectCategory(fullLink);
       let commissionRate = commissionRates[category] || commissionRates["default"];
       let estimatedCommission = (commissionRate * price) / 100;
@@ -76,7 +79,14 @@
         return response.url; // Trả về URL đích
       } catch (error) {
         console.error("Lỗi khi giải mã link:", error);
-        return shortUrl; // Nếu lỗi, dùng link gốc
+        // Thử fetch trực tiếp để lấy redirect
+        try {
+          let response = await fetch(shortUrl);
+          return response.url;
+        } catch (e) {
+          console.error("Lỗi khi fetch redirect:", e);
+          return shortUrl; // Nếu thất bại, dùng link gốc
+        }
       }
     }
 
@@ -87,16 +97,14 @@
         let text = await response.text();
         let parser = new DOMParser();
         let doc = parser.parseFromString(text, "text/html");
-        let priceElement = doc.querySelector(".product-price") || doc.querySelector(".price");
+        let priceElement = doc.querySelector(".product-price") || doc.querySelector(".price") || doc.querySelector(".product-detail__price");
         if (priceElement) {
           let priceText = priceElement.textContent.trim().replace(/[^0-9]/g, '');
           return parseInt(priceText) || 0;
         }
-        alert("⚠️ Không thể lấy giá. Vui lòng kiểm tra link!");
-        return 0;
+        return 0; // Không tìm thấy giá
       } catch (error) {
         console.error("Lỗi khi scrape:", error);
-        alert("⚠️ Lỗi khi lấy giá. Vui lòng thử lại!");
         return 0;
       }
     }
