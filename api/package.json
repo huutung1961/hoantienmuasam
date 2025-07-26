@@ -1,10 +1,9 @@
-
 {
   "name": "api",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "puppeteer-core": "^21.3.8",
-    "chrome-aws-lambda": "^10.1.0"
+    "puppeteer-core": "19.11.1",
+    "chrome-aws-lambda": "10.1.0"
   }
 }
