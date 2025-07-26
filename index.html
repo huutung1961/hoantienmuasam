@@ -3,180 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tạo Link Shopee Affiliate - Lấy Giá & Ngành Hàng</title>
+  <title>Tạo Link Shopee Affiliate</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f9fafb; text-align: center; padding: 40px 20px; }
-    h1 { color: #ff5722; margin-bottom: 20px; }
-    .container { background: white; padding: 30px; border-radius: 12px; max-width: 520px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    input, button { padding: 12px; margin: 10px 0; width: 90%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
-    button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
-    button:hover { background: #e64a19; }
-    #result, #commission, #categoryName { margin-top: 15px; font-weight: bold; word-break: break-word; }
-    #categoryName { color: #2196F3; }
-    #result { color: green; }
-    #commission { color: #4CAF50; }
-    #copyBtn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; display: none; }
-    #copyBtn:hover { background: #388E3C; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    h1 {
+      color: #ff5722;
+      margin-bottom: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 12px;
+      margin: 10px 0;
+      width: 90%;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #ff5722;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e64a19;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+      word-break: break-all;
+    }
+    #copyBtn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+    #copyBtn:hover {
+      background: #388E3C;
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>🔗 Shopee Affiliate Tool</h1>
-  <p>Dán link Shopee → Lấy giá & ngành hàng → Tạo link Affiliate + Tính hoa hồng.</p>
+  <div class="container">
+    <h1>🔗 Tạo Link Shopee Affiliate</h1>
+    <p>Dán link sản phẩm Shopee vào đây, hệ thống sẽ trả về link Affiliate của bạn.</p>
 
-  <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây" onblur="fetchProductData()">
+    <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây">
+    <br>
+    <button onclick="generateLink()">Tạo Link</button>
 
-  <div id="categoryName">📂 Ngành hàng: <i>Chưa có dữ liệu</i></div>
-  <div>💵 Giá: <input type="number" id="productPrice" placeholder="Giá sản phẩm (tự lấy)" readonly></div>
+    <div id="result"></div>
+    <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
+  </div>
 
-  <button onclick="generateLink()">Tạo Link + Tính Hoa hồng</button>
+  <script>
+    // Affiliate ID cố định của bạn
+    const affiliateID = "17337560220";
+    let generatedLink = "";
 
-  <div id="result"></div>
-  <div id="commission"></div>
-  <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
-</div>
+    function generateLink() {
+      let originalLink = document.getElementById("productLink").value.trim();
 
-<script>
-const affiliateID = "17337560220";
-let generatedLink = "";
-let categoryList = []; // Danh sách ngành hàng Shopee
-let categoryName = "";
-let commissionRate = 0.05; // mặc định 5%
+      if (!originalLink.includes("shopee")) {
+        alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
+        return;
+      }
 
-// 👉 Hàm tách shopid & itemid từ link Shopee
-function extractIDs(url) {
-  let match = url.match(/i\.(\d+)\.(\d+)/);
-  if (match) {
-    return { shopid: match[1], itemid: match[2] };
-  }
-  return null;
-}
-
-// 👉 Lấy toàn bộ danh sách ngành hàng 1 lần duy nhất
-function fetchCategories() {
-  return fetch("https://shopee.vn/api/v4/category/get_all")
-    .then(res => res.json())
-    .then(data => {
-      categoryList = data.data.category_list;
-    })
-    .catch(err => console.error("⚠️ Không lấy được danh mục Shopee", err));
-}
-
-// 👉 Lấy dữ liệu sản phẩm (giá + catid)
-async function fetchProductData() {
-  let originalLink = document.getElementById("productLink").value.trim();
-  let ids = extractIDs(originalLink);
-  
-  if (!ids) {
-    alert("⚠️ Không tìm thấy shopid & itemid trong link Shopee!");
-    return;
-  }
-
-  // Nếu chưa có danh mục thì tải trước
-  if (categoryList.length === 0) {
-    await fetchCategories();
-  }
-
-  let apiUrl = `https://shopee.vn/api/v4/item/get?itemid=${ids.itemid}&shopid=${ids.shopid}`;
-
-  fetch(apiUrl)
-    .then(response => response.json())
-    .then(data => {
-      if (data.item) {
-        // Lấy giá
-        let price = data.item.price / 100000;
-        document.getElementById("productPrice").value = price;
-
-        // Lấy ngành hàng
-        let catid = data.item.catid;
-        let foundCategory = findCategoryName(catid);
-        categoryName = foundCategory ? foundCategory : "Không xác định";
-        document.getElementById("categoryName").innerHTML = "📂 Ngành hàng: <b>" + categoryName + "</b>";
-
-        // Tạm thời set hoa hồng cơ bản theo ngành
-        commissionRate = estimateCommissionRate(catid);
+      // Thêm aff_id vào link Shopee
+      if (originalLink.includes("?")) {
+        generatedLink = originalLink + "&aff_id=" + affiliateID;
       } else {
-        alert("⚠️ Không lấy được dữ liệu sản phẩm.");
+        generatedLink = originalLink + "?aff_id=" + affiliateID;
       }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("⚠️ Lỗi khi gọi API Shopee.");
-    });
-}
 
-// 👉 Tìm tên ngành hàng từ catid
-function findCategoryName(catid) {
-  for (let cat of categoryList) {
-    if (cat.catid === catid) return cat.display_name;
-    if (cat.children) {
-      for (let sub of cat.children) {
-        if (sub.catid === catid) return sub.display_name;
-        if (sub.children) {
-          for (let subsub of sub.children) {
-            if (subsub.catid === catid) return subsub.display_name;
-          }
-        }
-      }
+      document.getElementById("result").innerHTML = `
+        ✅ Link Affiliate đã tạo:<br>
+        <a href="${generatedLink}" target="_blank">${generatedLink}</a>
+      `;
+      document.getElementById("copyBtn").style.display = "inline-block";
     }
-  }
-  return null;
-}
 
-// 👉 Ước tính % hoa hồng theo ngành (đơn giản hóa)
-function estimateCommissionRate(catid) {
-  // Bạn có thể custom sâu hơn theo bảng của Shopee
-  if (!categoryName) return 0.05;
-  if (categoryName.includes("Thời Trang")) return 0.10;
-  if (categoryName.includes("Điện Thoại") || categoryName.includes("Điện tử")) return 0.03;
-  if (categoryName.includes("Mỹ phẩm") || categoryName.includes("Sức khỏe")) return 0.08;
-  return 0.05;
-}
-
-// 👉 Hàm tạo link + tính hoa hồng
-function generateLink() {
-  let originalLink = document.getElementById("productLink").value.trim();
-  let productPrice = parseFloat(document.getElementById("productPrice").value);
-
-  if (!originalLink.includes("shopee")) {
-    alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
-    return;
-  }
-  if (isNaN(productPrice) || productPrice <= 0) {
-    alert("⚠️ Không có giá sản phẩm.");
-    return;
-  }
-
-  // Gắn aff_id vào link
-  if (originalLink.includes("?")) {
-    generatedLink = originalLink + "&aff_id=" + affiliateID;
-  } else {
-    generatedLink = originalLink + "?aff_id=" + affiliateID;
-  }
-
-  // Tính hoa hồng
-  let commission = productPrice * commissionRate;
-
-  document.getElementById("result").innerHTML = `
-    ✅ Link Affiliate:<br>
-    <a href="${generatedLink}" target="_blank">${generatedLink}</a>
-  `;
-  document.getElementById("commission").innerHTML = 
-    `💰 <b>Hoa hồng ước tính: ${commission.toLocaleString()} đ</b>`;
-
-  document.getElementById("copyBtn").style.display = "inline-block";
-}
-
-function copyLink() {
-  navigator.clipboard.writeText(generatedLink).then(() => {
-    alert("📋 Link đã được copy!");
-  });
-}
-
-// Gọi API categories khi load trang để cache sẵn
-fetchCategories();
-</script>
+    function copyLink() {
+      navigator.clipboard.writeText(generatedLink).then(() => {
+        alert("📋 Link đã được copy!");
+      });
+    }
+  </script>
 
 </body>
 </html>
