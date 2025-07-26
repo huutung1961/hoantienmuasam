@@ -1,33 +1,27 @@
+import fetch from 'node-fetch';
 
-const puppeteer = require("puppeteer-core");
-const chromium = require("chrome-aws-lambda");
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const { url } = req.query;
 
-  if (!url || !url.includes("shopee")) {
-    return res.status(400).json({ error: "URL không hợp lệ" });
+  if (!url || !url.includes("shopee.vn")) {
+    return res.status(400).json({ error: "Thiếu hoặc sai URL" });
   }
 
   try {
-    const browser = await chromium.puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36"
+      }
     });
 
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 0 });
+    const html = await response.text();
+    const match = html.match(/"price":(\d+)/);
+    const price = match ? parseInt(match[1]) : 0;
 
-    const priceText = await page.evaluate(() => {
-      const el = document.querySelector(".product-price") || document.querySelector(".pqTWkA");
-      return el ? el.textContent.replace(/[^\d]/g, "") : "0";
-    });
-
-    await browser.close();
-    res.status(200).json({ price: parseInt(priceText || "0") });
-  } catch (error) {
-    console.error("Lỗi:", error);
-    res.status(500).json({ error: "Không thể lấy giá sản phẩm" });
+    res.status(200).json({ price });
+  } catch (err) {
+    console.error("Lỗi lấy giá:", err);
+    res.status(500).json({ error: "Không thể lấy dữ liệu từ Shopee" });
   }
-};
+}
