@@ -1,1 +1,129 @@
 
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Link Shopee Affiliate & Ước Tính hoa hồng</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9fafb; text-align: center; padding: 50px 20px; }
+    h1 { color: #ff5722; margin-bottom: 20px; }
+    .container { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input, button { padding: 12px; margin: 10px 0; width: 90%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
+    button:hover { background: #e64a19; }
+    #result, #details { margin-top: 20px; font-weight: bold; word-break: break-all; }
+    #result a { color: green; }
+    #details { color: #388E3C; }
+    #copyBtn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; display: none; }
+    #copyBtn:hover { background: #388E3C; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔗 Tạo Link Shopee Affiliate</h1>
+    <p>Dán link sản phẩm Shopee (rút gọn hoặc đầy đủ) để tạo link Affiliate và lấy thông tin.</p>
+    <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây nhé" onpaste="generateLink()">
+    <br>
+    <button onclick="generateLink()">Tạo Link & Lấy Thông Tin</button>
+    <div id="result"></div>
+    <div id="details"></div>
+    <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
+  </div>
+  <script>
+    const affiliateID = "17337560220";
+    let generatedLink = "";
+    const commissionRates = { "fashion": 10, "electronics": 5, "beauty": 15, "home": 8, "default": 5 };
+
+    async function generateLink() {
+      let originalLink = document.getElementById("productLink").value.trim();
+      if (!originalLink.includes("shopee")) {
+        alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
+        return;
+      }
+
+      // Giải mã link rút gọn thành link đầy đủ
+      let fullLink = await resolveShortLink(originalLink);
+      if (originalLink.includes("?")) {
+        generatedLink = fullLink + "&aff_id=" + affiliateID;
+      } else {
+        generatedLink = fullLink + "?aff_id=" + affiliateID;
+      }
+
+      // Lấy giá và thông tin
+      let price = await scrapePrice(fullLink);
+      if (price === 0) {
+        alert("⚠️ Không thể lấy giá. Vui lòng kiểm tra link hoặc dùng link đầy đủ!");
+      }
+      let category = detectCategory(fullLink);
+      let commissionRate = commissionRates[category] || commissionRates["default"];
+      let estimatedCommission = (commissionRate * price) / 100;
+
+      let details = `
+        🔍 Giá thực tế: ${price.toLocaleString()} VNĐ<br>
+        🏷️ Danh mục: ${category}<br>
+        💰 Hoa hồng ước tính: ${estimatedCommission.toLocaleString()} VNĐ (${commissionRate}%)
+      `;
+
+      document.getElementById("result").innerHTML = `
+        ✅ Link Affiliate đã tạo:<br>
+        <a href="${generatedLink}" target="_blank">${generatedLink}</a>
+      `;
+      document.getElementById("details").innerHTML = details;
+      document.getElementById("copyBtn").style.display = "inline-block";
+    }
+
+    // Giải mã link rút gọn
+    async function resolveShortLink(shortUrl) {
+      try {
+        let response = await fetch(shortUrl, { method: "HEAD", redirect: "follow" });
+        return response.url; // Trả về URL đích
+      } catch (error) {
+        console.error("Lỗi khi giải mã link:", error);
+        // Thử fetch trực tiếp để lấy redirect
+        try {
+          let response = await fetch(shortUrl);
+          return response.url;
+        } catch (e) {
+          console.error("Lỗi khi fetch redirect:", e);
+          return shortUrl; // Nếu thất bại, dùng link gốc
+        }
+      }
+    }
+
+    // Scrape giá từ trang
+    async function scrapePrice(url) {
+      try {
+        let response = await fetch(url);
+        let text = await response.text();
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(text, "text/html");
+        let priceElement = doc.querySelector(".product-price") || doc.querySelector(".price") || doc.querySelector(".product-detail__price");
+        if (priceElement) {
+          let priceText = priceElement.textContent.trim().replace(/[^0-9]/g, '');
+          return parseInt(priceText) || 0;
+        }
+        return 0; // Không tìm thấy giá
+      } catch (error) {
+        console.error("Lỗi khi scrape:", error);
+        return 0;
+      }
+    }
+
+    // Phát hiện danh mục
+    function detectCategory(link) {
+      if (link.includes("fashion")) return "fashion";
+      if (link.includes("electronics")) return "electronics";
+      if (link.includes("beauty")) return "beauty";
+      if (link.includes("home")) return "home";
+      return "default";
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(generatedLink).then(() => {
+        alert("📋 Link đã được copy!");
+      });
+    }
+  </script>
+</body>
+</html>
