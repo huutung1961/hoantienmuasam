@@ -5,112 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tạo Link Shopee Affiliate & Ước Tính</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f9fafb;
-      text-align: center;
-      padding: 50px 20px;
-    }
-    h1 {
-      color: #ff5722;
-      margin-bottom: 20px;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      max-width: 500px;
-      margin: auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    input, button {
-      padding: 12px;
-      margin: 10px 0;
-      width: 90%;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #ff5722;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #e64a19;
-    }
-    #result, #details {
-      margin-top: 20px;
-      font-weight: bold;
-      word-break: break-all;
-    }
-    #result a {
-      color: green;
-    }
-    #details {
-      color: #388E3C;
-    }
-    #copyBtn {
-      margin-top: 10px;
-      padding: 8px 16px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      display: none;
-    }
-    #copyBtn:hover {
-      background: #388E3C;
-    }
+    body { font-family: Arial, sans-serif; background: #f9fafb; text-align: center; padding: 50px 20px; }
+    h1 { color: #ff5722; margin-bottom: 20px; }
+    .container { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    input, button { padding: 12px; margin: 10px 0; width: 90%; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; }
+    button { background: #ff5722; color: white; font-weight: bold; cursor: pointer; }
+    button:hover { background: #e64a19; }
+    #result, #details { margin-top: 20px; font-weight: bold; word-break: break-all; }
+    #result a { color: green; }
+    #details { color: #388E3C; }
+    #copyBtn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; display: none; }
+    #copyBtn:hover { background: #388E3C; }
   </style>
 </head>
 <body>
-
   <div class="container">
     <h1>🔗 Tạo Link Shopee Affiliate</h1>
-    <p>Dán link sản phẩm Shopee để tạo link Affiliate và lấy thông tin.</p>
-
+    <p>Dán link sản phẩm Shopee (rút gọn hoặc đầy đủ) để tạo link Affiliate và lấy thông tin.</p>
     <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây" onpaste="generateLink()">
     <br>
     <button onclick="generateLink()">Tạo Link & Lấy Thông Tin</button>
-
     <div id="result"></div>
     <div id="details"></div>
     <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
   </div>
-
   <script>
-    // Affiliate ID cố định của bạn
     const affiliateID = "17337560220";
     let generatedLink = "";
-    const commissionRates = {
-      "fashion": 10,
-      "electronics": 5,
-      "beauty": 15,
-      "home": 8,
-      "default": 5
-    };
+    const commissionRates = { "fashion": 10, "electronics": 5, "beauty": 15, "home": 8, "default": 5 };
 
     async function generateLink() {
       let originalLink = document.getElementById("productLink").value.trim();
-
       if (!originalLink.includes("shopee")) {
         alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
         return;
       }
 
-      // Thêm aff_id vào link Shopee
+      // Giải mã link rút gọn thành link đầy đủ
+      let fullLink = await resolveShortLink(originalLink);
       if (originalLink.includes("?")) {
-        generatedLink = originalLink + "&aff_id=" + affiliateID;
+        generatedLink = fullLink + "&aff_id=" + affiliateID;
       } else {
-        generatedLink = originalLink + "?aff_id=" + affiliateID;
+        generatedLink = fullLink + "?aff_id=" + affiliateID;
       }
 
-      // Lấy giá bằng web scraping
-      let price = await scrapePrice(originalLink);
-      let category = detectCategory(originalLink);
+      // Lấy giá và thông tin
+      let price = await scrapePrice(fullLink);
+      let category = detectCategory(fullLink);
       let commissionRate = commissionRates[category] || commissionRates["default"];
       let estimatedCommission = (commissionRate * price) / 100;
 
@@ -128,12 +69,22 @@
       document.getElementById("copyBtn").style.display = "inline-block";
     }
 
-    // Hàm scrape giá từ trang Shopee
+    // Giải mã link rút gọn
+    async function resolveShortLink(shortUrl) {
+      try {
+        let response = await fetch(shortUrl, { method: "HEAD", redirect: "follow" });
+        return response.url; // Trả về URL đích
+      } catch (error) {
+        console.error("Lỗi khi giải mã link:", error);
+        return shortUrl; // Nếu lỗi, dùng link gốc
+      }
+    }
+
+    // Scrape giá từ trang
     async function scrapePrice(url) {
       try {
         let response = await fetch(url);
         let text = await response.text();
-        // Tìm giá trong HTML (thường nằm trong class như product-price)
         let parser = new DOMParser();
         let doc = parser.parseFromString(text, "text/html");
         let priceElement = doc.querySelector(".product-price") || doc.querySelector(".price");
@@ -150,7 +101,7 @@
       }
     }
 
-    // Hàm phát hiện danh mục (giả lập)
+    // Phát hiện danh mục
     function detectCategory(link) {
       if (link.includes("fashion")) return "fashion";
       if (link.includes("electronics")) return "electronics";
@@ -165,6 +116,5 @@
       });
     }
   </script>
-
 </body>
 </html>
