@@ -86,14 +86,14 @@
     const affiliateID = "17337560220";
     let generatedLink = "";
     const commissionRates = {
-      "fashion": 10,    // Thời trang: 10%
-      "electronics": 5, // Điện tử: 5%
-      "beauty": 15,     // Làm đẹp: 15%
-      "home": 8,        // Nhà cửa: 8%
-      "default": 5      // Mặc định: 5%
+      "fashion": 10,
+      "electronics": 5,
+      "beauty": 15,
+      "home": 8,
+      "default": 5
     };
 
-    function generateLink() {
+    async function generateLink() {
       let originalLink = document.getElementById("productLink").value.trim();
 
       if (!originalLink.includes("shopee")) {
@@ -108,14 +108,14 @@
         generatedLink = originalLink + "?aff_id=" + affiliateID;
       }
 
-      // Giả lập lấy giá tiền và danh mục (thay bằng API thực tế)
-      let price = estimatePrice(originalLink); // Giả lập giá
+      // Lấy giá bằng web scraping
+      let price = await scrapePrice(originalLink);
       let category = detectCategory(originalLink);
       let commissionRate = commissionRates[category] || commissionRates["default"];
-      let estimatedCommission = commissionRate * price / 100; // Hoa hồng ước tính
+      let estimatedCommission = (commissionRate * price) / 100;
 
       let details = `
-        🔍 Giá ước tính: ${price.toLocaleString()} VNĐ<br>
+        🔍 Giá thực tế: ${price.toLocaleString()} VNĐ<br>
         🏷️ Danh mục: ${category}<br>
         💰 Hoa hồng ước tính: ${estimatedCommission.toLocaleString()} VNĐ (${commissionRate}%)
       `;
@@ -128,19 +128,35 @@
       document.getElementById("copyBtn").style.display = "inline-block";
     }
 
-    // Hàm giả lập phát hiện danh mục
+    // Hàm scrape giá từ trang Shopee
+    async function scrapePrice(url) {
+      try {
+        let response = await fetch(url);
+        let text = await response.text();
+        // Tìm giá trong HTML (thường nằm trong class như product-price)
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(text, "text/html");
+        let priceElement = doc.querySelector(".product-price") || doc.querySelector(".price");
+        if (priceElement) {
+          let priceText = priceElement.textContent.trim().replace(/[^0-9]/g, '');
+          return parseInt(priceText) || 0;
+        }
+        alert("⚠️ Không thể lấy giá. Vui lòng kiểm tra link!");
+        return 0;
+      } catch (error) {
+        console.error("Lỗi khi scrape:", error);
+        alert("⚠️ Lỗi khi lấy giá. Vui lòng thử lại!");
+        return 0;
+      }
+    }
+
+    // Hàm phát hiện danh mục (giả lập)
     function detectCategory(link) {
       if (link.includes("fashion")) return "fashion";
       if (link.includes("electronics")) return "electronics";
       if (link.includes("beauty")) return "beauty";
       if (link.includes("home")) return "home";
       return "default";
-    }
-
-    // Hàm giả lập giá tiền (thay bằng API để lấy giá thực tế)
-    function estimatePrice(link) {
-      // Giả lập ngẫu nhiên giá từ 100,000 đến 1,000,000 VNĐ
-      return Math.floor(Math.random() * (1000000 - 100000 + 1)) + 100000;
     }
 
     function copyLink() {
