@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Link Shopee Affiliate</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    h1 {
+      color: #ff5722;
+      margin-bottom: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 12px;
+      margin: 10px 0;
+      width: 90%;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #ff5722;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #e64a19;
+    }
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+      word-break: break-all;
+    }
+    #copyBtn {
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+    #copyBtn:hover {
+      background: #388E3C;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🔗 Tạo Link Shopee Affiliate</h1>
+    <p>Dán link sản phẩm Shopee vào đây, hệ thống sẽ trả về link Affiliate của bạn.</p>
+
+    <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây">
+    <br>
+    <button onclick="generateLink()">Tạo Link</button>
+
+    <div id="result"></div>
+    <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
+  </div>
+
+  <script>
+    // Affiliate ID cố định của bạn
+    const affiliateID = "17337560220";
+    let generatedLink = "";
+
+    function generateLink() {
+      let originalLink = document.getElementById("productLink").value.trim();
+
+      if (!originalLink.includes("shopee")) {
+        alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
+        return;
+      }
+
+      // Thêm aff_id vào link Shopee
+      if (originalLink.includes("?")) {
+        generatedLink = originalLink + "&aff_id=" + affiliateID;
+      } else {
+        generatedLink = originalLink + "?aff_id=" + affiliateID;
+      }
+
+      document.getElementById("result").innerHTML = `
+        ✅ Link Affiliate đã tạo:<br>
+        <a href="${generatedLink}" target="_blank">${generatedLink}</a>
+      `;
+      document.getElementById("copyBtn").style.display = "inline-block";
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(generatedLink).then(() => {
+        alert("📋 Link đã được copy!");
+      });
+    }
+  </script>
+
+</body>
+</html>
+
