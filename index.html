@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tạo Link Shopee Affiliate</title>
+  <title>Tạo Link Shopee Affiliate & Ước Tính</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -40,11 +40,16 @@
     button:hover {
       background: #e64a19;
     }
-    #result {
+    #result, #details {
       margin-top: 20px;
       font-weight: bold;
-      color: green;
       word-break: break-all;
+    }
+    #result a {
+      color: green;
+    }
+    #details {
+      color: #388E3C;
     }
     #copyBtn {
       margin-top: 10px;
@@ -65,13 +70,14 @@
 
   <div class="container">
     <h1>🔗 Tạo Link Shopee Affiliate</h1>
-    <p>Dán link sản phẩm Shopee vào đây, hệ thống sẽ trả về link Affiliate của bạn.</p>
+    <p>Dán link sản phẩm Shopee để tạo link Affiliate và lấy thông tin.</p>
 
-    <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây">
+    <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây" onpaste="generateLink()">
     <br>
-    <button onclick="generateLink()">Tạo Link</button>
+    <button onclick="generateLink()">Tạo Link & Lấy Thông Tin</button>
 
     <div id="result"></div>
+    <div id="details"></div>
     <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
   </div>
 
@@ -79,6 +85,13 @@
     // Affiliate ID cố định của bạn
     const affiliateID = "17337560220";
     let generatedLink = "";
+    const commissionRates = {
+      "fashion": 10,    // Thời trang: 10%
+      "electronics": 5, // Điện tử: 5%
+      "beauty": 15,     // Làm đẹp: 15%
+      "home": 8,        // Nhà cửa: 8%
+      "default": 5      // Mặc định: 5%
+    };
 
     function generateLink() {
       let originalLink = document.getElementById("productLink").value.trim();
@@ -95,11 +108,39 @@
         generatedLink = originalLink + "?aff_id=" + affiliateID;
       }
 
+      // Giả lập lấy giá tiền và danh mục (thay bằng API thực tế)
+      let price = estimatePrice(originalLink); // Giả lập giá
+      let category = detectCategory(originalLink);
+      let commissionRate = commissionRates[category] || commissionRates["default"];
+      let estimatedCommission = commissionRate * price / 100; // Hoa hồng ước tính
+
+      let details = `
+        🔍 Giá ước tính: ${price.toLocaleString()} VNĐ<br>
+        🏷️ Danh mục: ${category}<br>
+        💰 Hoa hồng ước tính: ${estimatedCommission.toLocaleString()} VNĐ (${commissionRate}%)
+      `;
+
       document.getElementById("result").innerHTML = `
         ✅ Link Affiliate đã tạo:<br>
         <a href="${generatedLink}" target="_blank">${generatedLink}</a>
       `;
+      document.getElementById("details").innerHTML = details;
       document.getElementById("copyBtn").style.display = "inline-block";
+    }
+
+    // Hàm giả lập phát hiện danh mục
+    function detectCategory(link) {
+      if (link.includes("fashion")) return "fashion";
+      if (link.includes("electronics")) return "electronics";
+      if (link.includes("beauty")) return "beauty";
+      if (link.includes("home")) return "home";
+      return "default";
+    }
+
+    // Hàm giả lập giá tiền (thay bằng API để lấy giá thực tế)
+    function estimatePrice(link) {
+      // Giả lập ngẫu nhiên giá từ 100,000 đến 1,000,000 VNĐ
+      return Math.floor(Math.random() * (1000000 - 100000 + 1)) + 100000;
     }
 
     function copyLink() {
