@@ -1,17 +1,18 @@
-// /api/get-price.js
 import fetch from "node-fetch";
 
 export default async function handler(req, res) {
   const { itemid, shopid } = req.query;
+
   if (!itemid || !shopid) {
     return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
   }
 
   try {
+    // URL gốc Shopee
     const shopeeUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    
-    // Dùng proxy trung gian (ScraperAPI)
-    const proxyUrl = `https://api.scraperapi.com/?api_key=YOUR_API_KEY&url=${encodeURIComponent(shopeeUrl)}`;
+
+    // Dùng proxy ScraperAPI để vượt chặn
+    const proxyUrl = `https://api.scraperapi.com/?api_key=b5b2216358a7f0a915a00a7225f9a84a&url=${encodeURIComponent(shopeeUrl)}`;
 
     const response = await fetch(proxyUrl, {
       headers: {
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
 
     const json = await response.json();
 
-    if (!json.data) {
+    if (!json || !json.data) {
       return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
     }
 
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
       liked: item.liked_count,
       image: `https://down-vn.img.susercontent.com/file/${item.image}`,
       shopid: item.shopid,
-      itemid: item.itemid,
+      itemid: item.itemid
     };
 
     res.status(200).json(product);
