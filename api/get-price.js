@@ -1,24 +1,25 @@
 // /api/get-price.js
-import crypto from "crypto";
 import fetch from "node-fetch";
+
 export default async function handler(req, res) {
   const { itemid, shopid } = req.query;
-
   if (!itemid || !shopid) {
     return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
   }
 
   try {
-    const response = await fetch(
-      `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-          "Accept": "application/json"
-        }
+    const shopeeUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
+    
+    // Dùng proxy trung gian (ScraperAPI)
+    const proxyUrl = `https://api.scraperapi.com/?api_key=YOUR_API_KEY&url=${encodeURIComponent(shopeeUrl)}`;
+
+    const response = await fetch(proxyUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "application/json",
+        "Referer": "https://shopee.vn/"
       }
-    );
+    });
 
     const json = await response.json();
 
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
       liked: item.liked_count,
       image: `https://down-vn.img.susercontent.com/file/${item.image}`,
       shopid: item.shopid,
-      itemid: item.itemid
+      itemid: item.itemid,
     };
 
     res.status(200).json(product);
