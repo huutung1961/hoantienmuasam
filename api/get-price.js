@@ -10,7 +10,8 @@ export default async function handler(req, res) {
   try {
     const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&render=true&country=vn&keep_headers=true&url=${encodeURIComponent(targetUrl)}`;
+    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&premium=true&country=vn&url=${encodeURIComponent(targetUrl)}`;
+
 
     const response = await fetch(scraperUrl, {
       headers: {
