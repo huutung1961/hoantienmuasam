@@ -10,13 +10,14 @@ export default async function handler(req, res) {
   try {
     const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&render=false&country=vn&url=${encodeURIComponent(targetUrl)}`;
+    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&render=true&country=vn&keep_headers=true&url=${encodeURIComponent(targetUrl)}`;
 
     const response = await fetch(scraperUrl, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-        Accept: "application/json, text/plain, */*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Referer": "https://shopee.vn/",
+        "Origin": "https://shopee.vn",
       },
     });
 
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
     try {
       json = JSON.parse(text);
     } catch {
-      console.log("Phản hồi không phải JSON:", text.slice(0, 300));
+      console.log("Phản hồi không phải JSON:", text.slice(0, 500));
       return res.status(500).json({ error: "Dữ liệu trả về không hợp lệ từ Shopee" });
     }
 
