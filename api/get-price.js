@@ -8,18 +8,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
+    const apiKey = "YOUR_SCRAPINGBEE_API_KEY";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&premium=true&country=vn&url=${encodeURIComponent(targetUrl)}`;
-
-
+    const scraperUrl = `https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&country_code=vn&render_js=false`;
+    
     const response = await fetch(scraperUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Referer": "https://shopee.vn/",
-        "Origin": "https://shopee.vn",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
+        "Accept": "application/json",
       },
+    });
+
     });
 
     console.log("Shopee response status:", response.status);
