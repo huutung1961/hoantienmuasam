@@ -8,25 +8,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Gọi qua ScraperAPI
     const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}`;
+    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&render=false&country=vn&url=${encodeURIComponent(targetUrl)}`;
 
     const response = await fetch(scraperUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-        "Accept": "application/json"
-      }
+        Accept: "application/json, text/plain, */*",
+      },
     });
+
+    console.log("Shopee response status:", response.status);
 
     const text = await response.text();
     let json;
     try {
       json = JSON.parse(text);
     } catch {
-      console.log("Phản hồi không phải JSON:", text.slice(0, 200));
+      console.log("Phản hồi không phải JSON:", text.slice(0, 300));
       return res.status(500).json({ error: "Dữ liệu trả về không hợp lệ từ Shopee" });
     }
 
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
       liked: item.liked_count,
       image: `https://down-vn.img.susercontent.com/file/${item.image}`,
       shopid: item.shopid,
-      itemid: item.itemid
+      itemid: item.itemid,
     };
 
     res.status(200).json(product);
