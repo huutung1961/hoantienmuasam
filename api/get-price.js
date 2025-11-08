@@ -1,11 +1,29 @@
+import fetch from "node-fetch";
+
 export default async function handler(req, res) {
-  const { itemid, shopid } = req.query;
+  let { itemid, shopid, url } = req.query;
+
+  // Nếu người dùng gửi link Shopee, tự tách itemid & shopid
+  if (url && (!itemid || !shopid)) {
+    try {
+      const match = url.match(/\/(\d+)\/(\d+)/);
+      if (match) {
+        shopid = match[1];
+        itemid = match[2];
+      } else {
+        return res.status(400).json({ error: "URL Shopee không hợp lệ" });
+      }
+    } catch (e) {
+      return res.status(400).json({ error: "Không thể phân tích URL Shopee" });
+    }
+  }
 
   if (!itemid || !shopid) {
     return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
   }
 
   try {
+    // Dùng ScraperAPI với Ultra Premium để tránh 403 từ Shopee
     const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
     const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&ultra_premium=true&country=vn&url=${encodeURIComponent(targetUrl)}`;
@@ -19,6 +37,7 @@ export default async function handler(req, res) {
     });
 
     const text = await response.text();
+
     let json;
     try {
       json = JSON.parse(text);
@@ -28,10 +47,12 @@ export default async function handler(req, res) {
     }
 
     if (!json.data) {
+      console.log("Phản hồi Shopee:", json);
       return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
     }
 
     const item = json.data;
+
     res.status(200).json({
       name: item.name,
       price: item.price / 100000,
