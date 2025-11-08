@@ -1,24 +1,35 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
   const { itemid, shopid } = req.query;
-  if (!itemid || !shopid) return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
+
+  if (!itemid || !shopid) {
+    return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
+  }
 
   try {
-    const apiKey = "YOUR_SCRAPINGBEE_API_KEY";
+    const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
     const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodeURIComponent(targetUrl)}&country_code=vn&render_js=false`;
+    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&ultra_premium=true&country=vn&url=${encodeURIComponent(targetUrl)}`;
 
     const response = await fetch(scraperUrl, {
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-        Accept: "application/json",
+        "Accept": "application/json",
       },
     });
 
-    const json = await response.json();
-    if (!json.data) return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+    const text = await response.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      console.log("Phản hồi không phải JSON:", text.slice(0, 200));
+      return res.status(500).json({ error: "Dữ liệu trả về không hợp lệ từ Shopee" });
+    }
+
+    if (!json.data) {
+      return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+    }
 
     const item = json.data;
     res.status(200).json({
