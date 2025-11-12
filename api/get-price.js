@@ -1,85 +1,56 @@
 import fetch from "node-fetch";
 
 export default async function handler(req, res) {
-  // Lấy các tham số từ request
-  let { itemid, shopid, url } = req.query;
+  const { url } = req.query;
+  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k"; // thay bằng token thật
 
-  // *** THAY THẾ CHUỖI NÀY BẰNG API TOKEN THẬT CỦA BẠN ***
-  // LƯU Ý: Đặt Key công khai (public) có rủi ro bị lạm dụng.
-  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k"; 
-  // Ví dụ: const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYjQiOiIzMjEzNjEODE5NnY1Y3M2MTk2MDk0.SdVd1i6RF74aH5Afduu4495uK8qthWjXOSOkHZHbvI";
-
-  // Kiểm tra và xử lý nếu người dùng gửi link Shopee
-  if (url && (!itemid || !shopid)) {
-    try {
-      // Tách shopid và itemid từ link Shopee
-      const match = url.match(/\/(\d+)\/(\d+)/);
-      if (match) {
-        // Shopee thường có định dạng /shopid/itemid
-        shopid = match[1];
-        itemid = match[2];
-      } else {
-        return res.status(400).json({ error: "URL Shopee không hợp lệ" });
-      }
-    } catch (e) {
-      return res.status(400).json({ error: "Không thể phân tích URL Shopee" });
-    }
-  }
-
-  // Kiểm tra tham số cần thiết
-  if (!itemid || !shopid) {
-    return res.status(400).json({ error: "Thiếu itemid hoặc shopid" });
-  }
-  
-  // Kiểm tra API Key
-  if (NOX_API_KEY === "YOUR_API_TOKEN_HERE" || !NOX_API_KEY) {
-     return res.status(500).json({ error: "Lỗi: API Key chưa được thay thế." });
-  }
+  if (!url) return res.status(400).send("Thiếu url Shopee");
 
   try {
-    // Endpoint của NoxAPI (thêm /v1 nếu cần thiết, nên kiểm tra docs)
-    // Giả định dùng /v1 theo chuẩn API thông thường
-    const apiUrl = `https://api.noxapi.com/v1/shopee/item_detail?item_id=${itemid}&shop_id=${shopid}`;
-
-    const response = await fetch(apiUrl, {
+    // Gọi API POST /item_detail_by_url
+    const response = await fetch("http://api.noxapi.com/v1/shopee/item_detail_by_url", {
+      method: "POST",
       headers: {
-        // Dùng API Key (Token) làm Bearer Token trong Header
         Authorization: `Bearer ${NOX_API_KEY}`,
+        "Content-Type": "application/json",
         Accept: "application/json",
       },
+      body: JSON.stringify({ url }),
     });
 
-    const json = await response.json();
+    const data = await response.json();
 
-    // Xử lý lỗi từ API (ví dụ: lỗi 401, hết hạn mức, hoặc không tìm thấy sản phẩm)
-    if (json.code !== 0 && response.status !== 200) {
-        const errorMessage = json.msg || "Lỗi không xác định từ NoxAPI. Kiểm tra API Key/Hạn mức.";
-        return res.status(response.status).json({ error: errorMessage });
-    }
-    
-    // Nếu response là 200 OK nhưng không có data (có thể do lỗi cấu trúc response)
-    if (!json.data) {
-        return res.status(404).json({
-          error: "Không tìm thấy sản phẩm hoặc dữ liệu trả về không hợp lệ.",
-        });
+    if (!data || !data.data) {
+      return res.status(404).send("Không tìm thấy sản phẩm hoặc dữ liệu không hợp lệ");
     }
 
-    const item = json.data;
+    const item = data.data;
 
-    res.status(200).json({
-      name: item.name,
-      // Giá trị tiền tệ được chia 100000 (giả định theo code cũ của bạn)
-      price: item.price / 100000, 
-      price_before_discount: item.price_before_discount / 100000,
-      stock: item.stock,
-      sold: item.historical_sold,
-      liked: item.liked_count,
-      image: `https://down-vn.img.susercontent.com/file/${item.image}`,
-      shopid: item.shopid,
-      itemid: item.itemid,
-    });
+    // Render HTML trực tiếp (giống PHP)
+    let html = `<h1>${item.title}</h1>`;
+    html += `<p>Giá: ${item.price_info?.price ?? "N/A"}</p>`;
+    html += `<p>Giá gốc: ${item.price_info?.price_before_discount ?? "N/A"}</p>`;
+    html += `<p>Tồn kho: ${item.stock ?? "N/A"}</p>`;
+    html += `<p>Đã bán: ${item.sold ?? "N/A"}</p>`;
+    html += `<p>Like: ${item.liked_count ?? "N/A"}</p>`;
+
+    if (item.images && item.images.length > 0) {
+      html += "<h3>Hình ảnh:</h3>";
+      item.images.forEach(img => {
+        html += `<img src="${img}" style="max-width:150px; margin:5px; border:1px solid #ccc; border-radius:5px;">`;
+      });
+    }
+
+    if (item.video_url) {
+      html += `<h3>Video:</h3>`;
+      html += `<video width="320" controls><source src="${item.video_url}" type="video/mp4">Trình duyệt không hỗ trợ video.</video>`;
+    }
+
+    res.setHeader("Content-Type", "text/html");
+    res.status(200).send(html);
+
   } catch (err) {
     console.error("Lỗi kết nối hoặc xử lý:", err);
-    res.status(500).json({ error: "Không thể kết nối hoặc xử lý dữ liệu từ NoxAPI" });
+    res.status(500).send("Không thể kết nối hoặc xử lý dữ liệu từ NoxAPI");
   }
 }
