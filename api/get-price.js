@@ -3,18 +3,14 @@ import fetch from "node-fetch";
 export default async function handler(req, res) {
   let { itemid, shopid, url } = req.query;
 
-  // Nếu người dùng gửi link Shopee, tự tách itemid & shopid
+  // Nếu người dùng gửi link Shopee → tự tách itemid & shopid
   if (url && (!itemid || !shopid)) {
-    try {
-      const match = url.match(/\/(\d+)\/(\d+)/);
-      if (match) {
-        shopid = match[1];
-        itemid = match[2];
-      } else {
-        return res.status(400).json({ error: "URL Shopee không hợp lệ" });
-      }
-    } catch (e) {
-      return res.status(400).json({ error: "Không thể phân tích URL Shopee" });
+    const match = url.match(/\/(\d+)\/(\d+)/);
+    if (match) {
+      shopid = match[1];
+      itemid = match[2];
+    } else {
+      return res.status(400).json({ error: "URL Shopee không hợp lệ" });
     }
   }
 
@@ -23,32 +19,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Dùng ScraperAPI với Ultra Premium để tránh 403 từ Shopee
-    const apiKey = "b5b2216358a7f0a915a00a7225f9a84a";
-    const targetUrl = `https://shopee.vn/api/v4/item/get?itemid=${itemid}&shopid=${shopid}`;
-    const scraperUrl = `https://api.scraperapi.com/?api_key=${apiKey}&ultra_premium=true&country=vn&url=${encodeURIComponent(targetUrl)}`;
+    // ✅ Sử dụng token NoxAPI của bạn
+    const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k"; // <-- thay bằng token của bạn
 
-    const response = await fetch(scraperUrl, {
+    const apiUrl = `https://api.noxapi.com/shopee/item_detail?itemid=${itemid}&shopid=${shopid}`;
+
+    const response = await fetch(apiUrl, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36",
-        "Accept": "application/json",
-      },
+        "Authorization": `Bearer ${NOX_API_KEY}`,
+        "Accept": "application/json"
+      }
     });
 
-    const text = await response.text();
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      console.log("Phản hồi không phải JSON:", text.slice(0, 200));
-      return res.status(500).json({ error: "Dữ liệu trả về không hợp lệ từ Shopee" });
-    }
+    const json = await response.json();
 
     if (!json.data) {
-      console.log("Phản hồi Shopee:", json);
-      return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+      return res.status(404).json({ error: "Không tìm thấy sản phẩm trên Shopee" });
     }
 
     const item = json.data;
@@ -64,8 +50,9 @@ export default async function handler(req, res) {
       shopid: item.shopid,
       itemid: item.itemid,
     });
+
   } catch (err) {
-    console.error("Lỗi lấy dữ liệu Shopee:", err);
-    res.status(500).json({ error: "Không thể lấy dữ liệu từ Shopee" });
+    console.error("Lỗi từ NoxAPI:", err);
+    res.status(500).json({ error: "Không thể lấy dữ liệu từ NoxAPI" });
   }
 }
