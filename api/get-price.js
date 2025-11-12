@@ -19,22 +19,24 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Sử dụng token NoxAPI của bạn
-    const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k"; // <-- thay bằng token của bạn
+    const NOX_API_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5kk";
 
     const apiUrl = `https://api.noxapi.com/shopee/item_detail?itemid=${itemid}&shopid=${shopid}`;
 
     const response = await fetch(apiUrl, {
       headers: {
-        "Authorization": `Bearer ${NOX_API_KEY}`,
-        "Accept": "application/json"
-      }
+        Authorization: `Bearer ${NOX_API_KEY}`,
+        Accept: "application/json",
+      },
     });
 
     const json = await response.json();
 
     if (!json.data) {
-      return res.status(404).json({ error: "Không tìm thấy sản phẩm trên Shopee" });
+      return res.status(404).json({
+        error: "Không tìm thấy sản phẩm trên Shopee",
+      });
     }
 
     const item = json.data;
@@ -50,7 +52,6 @@ export default async function handler(req, res) {
       shopid: item.shopid,
       itemid: item.itemid,
     });
-
   } catch (err) {
     console.error("Lỗi từ NoxAPI:", err);
     res.status(500).json({ error: "Không thể lấy dữ liệu từ NoxAPI" });
