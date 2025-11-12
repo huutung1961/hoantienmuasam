@@ -1,13 +1,18 @@
 import fetch from "node-fetch";
 
 export default async function handler(req, res) {
-  const { url } = req.query;
-  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k"; // thay bằng token thật
+  let { url } = req.query;
 
-  if (!url) return res.status(400).send("Thiếu url Shopee");
+  if (!url) {
+    return res.status(400).json({
+      error: "URL Shopee không được cung cấp",
+    });
+  }
+
+  // Thay bằng API Key thật của bạn
+  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k";
 
   try {
-    // Gọi API POST /item_detail_by_url
     const response = await fetch("http://api.noxapi.com/v1/shopee/item_detail_by_url", {
       method: "POST",
       headers: {
@@ -20,37 +25,44 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
+    // Nếu không có dữ liệu trả về, fallback
     if (!data || !data.data) {
-      return res.status(404).send("Không tìm thấy sản phẩm hoặc dữ liệu không hợp lệ");
+      return res.status(200).json({
+        message: "❌ Không thể lấy thông tin sản phẩm. Hãy thử lại!",
+        price: "0 VNĐ",
+        category: "default",
+        commission: "0 VNĐ (5%)",
+      });
     }
 
     const item = data.data;
 
-    // Render HTML trực tiếp (giống PHP)
-    let html = `<h1>${item.title}</h1>`;
-    html += `<p>Giá: ${item.price_info?.price ?? "N/A"}</p>`;
-    html += `<p>Giá gốc: ${item.price_info?.price_before_discount ?? "N/A"}</p>`;
-    html += `<p>Tồn kho: ${item.stock ?? "N/A"}</p>`;
-    html += `<p>Đã bán: ${item.sold ?? "N/A"}</p>`;
-    html += `<p>Like: ${item.liked_count ?? "N/A"}</p>`;
+    // Hoa hồng ước tính 5% (ví dụ)
+    const price = item.price_info?.price || 0;
+    const commission = Math.floor(price * 0.05);
 
-    if (item.images && item.images.length > 0) {
-      html += "<h3>Hình ảnh:</h3>";
-      item.images.forEach(img => {
-        html += `<img src="${img}" style="max-width:150px; margin:5px; border:1px solid #ccc; border-radius:5px;">`;
-      });
-    }
-
-    if (item.video_url) {
-      html += `<h3>Video:</h3>`;
-      html += `<video width="320" controls><source src="${item.video_url}" type="video/mp4">Trình duyệt không hỗ trợ video.</video>`;
-    }
-
-    res.setHeader("Content-Type", "text/html");
-    res.status(200).send(html);
-
+    res.status(200).json({
+      message: "✅ Lấy thông tin sản phẩm thành công",
+      name: item.title || "N/A",
+      price: `${price} VNĐ`,
+      price_before_discount: item.price_info?.price_before_discount || 0,
+      stock: item.stock ?? "N/A",
+      sold: item.sold ?? "N/A",
+      liked: item.liked_count ?? "N/A",
+      category: item.cat_name || "default",
+      commission: `${commission} VNĐ (5%)`,
+      images: item.images || [],
+      video: item.video_url || null,
+      shopid: item.shopid,
+      itemid: item.itemid,
+    });
   } catch (err) {
-    console.error("Lỗi kết nối hoặc xử lý:", err);
-    res.status(500).send("Không thể kết nối hoặc xử lý dữ liệu từ NoxAPI");
+    console.error("Lỗi kết nối NoxAPI:", err);
+    res.status(500).json({
+      message: "❌ Không thể lấy thông tin sản phẩm. Hãy thử lại!",
+      price: "0 VNĐ",
+      category: "default",
+      commission: "0 VNĐ (5%)",
+    });
   }
 }
