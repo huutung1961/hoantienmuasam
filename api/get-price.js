@@ -1,25 +1,32 @@
 import axios from "axios";
+import http from "http";
 
 export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: "URL không hợp lệ" });
 
-  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k";
+  const NOX_API_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k";
 
   try {
-    const response = await axios.post(
-      "http://api.noxapi.com/v1/shopee/item_detail_by_url",
-      { url },
-      {
-        headers: {
-          Authorization: `Bearer ${NOX_API_KEY}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // 🎯 thêm User-Agent
-        },
-        timeout: 30000,
-      }
-    );
+    // ⚙️ ép axios dùng HTTP/1.1, tránh lỗi handshake
+    const agent = new http.Agent({ keepAlive: false });
+
+    const response = await axios({
+      method: "POST",
+      url: "http://api.noxapi.com/v1/shopee/item_detail_by_url",
+      data: { url },
+      headers: {
+        Authorization: `Bearer ${NOX_API_KEY}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        Connection: "close", // giống PHP cURL
+      },
+      httpAgent: agent,
+      timeout: 20000,
+      decompress: false, // tắt gzip
+    });
 
     const data = response.data;
 
@@ -52,7 +59,10 @@ export default async function handler(req, res) {
       itemid: item.itemid,
     });
   } catch (err) {
-    console.error("Lỗi kết nối NoxAPI:", err.message);
+    console.error("❌ Lỗi NoxAPI:", err.message);
+    if (err.response) {
+      console.error("Response data:", err.response.data);
+    }
     res.status(500).json({
       message: "❌ Không thể lấy thông tin sản phẩm. Hãy thử lại!",
       price: "0 VNĐ",
