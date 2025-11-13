@@ -1,206 +1,109 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tạo Link Shopee Affiliate</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #ff8a65, #ff7043, #ffab91);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 30px;
-      color: #333;
-    }
-
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 18px;
-      padding: 40px 30px;
-      width: 100%;
-      max-width: 520px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-      text-align: center;
-      animation: fadeIn 0.6s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-      color: #ff5722;
-      font-size: 26px;
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #666;
-      font-size: 15px;
-      margin-bottom: 25px;
-    }
-
-    input {
-      width: 90%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      outline: none;
-      font-size: 15px;
-      transition: 0.2s;
-    }
-
-    input:focus {
-      border-color: #ff7043;
-      box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.2);
-    }
-
-    button {
-      width: 90%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #ff5722, #ff7043);
-      color: white;
-      font-weight: bold;
-      font-size: 16px;
-      margin-top: 12px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      background: linear-gradient(135deg, #e64a19, #ff7043);
-    }
-
-    #result {
-      margin-top: 25px;
-      display: none;
-      text-align: left;
-      background: #fff5f0;
-      border: 1px solid #ffe0d1;
-      padding: 20px;
-      border-radius: 10px;
-    }
-
-    .product-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 12px;
-    }
-
-    .product-info img {
-      width: 80px;
-      height: 80px;
-      border-radius: 10px;
-      object-fit: cover;
-      border: 1px solid #ddd;
-    }
-
-    .copy-btn {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .copy-btn:hover {
-      background: #2e7d32;
-    }
-
-    .loading {
-      display: none;
-      margin-top: 15px;
-      color: #ff7043;
-      font-style: italic;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>🛒 Tạo Link Shopee Affiliate</h1>
-    <p>Dán link sản phẩm Shopee của bạn, hệ thống sẽ tạo link Affiliate tự động.</p>
-
-    <input type="text" id="productLink" placeholder="https://shopee.vn/product/...">
-    <button onclick="generateLink()">🚀 Tạo Link</button>
-
-    <div class="loading" id="loading">⏳ Đang xử lý, vui lòng đợi...</div>
-
-    <div id="result"></div>
-  </div>
-
-  <script>
-    const API_URL = "https://your-backend.vercel.app/api/generate"; 
-    // 👈 Thay bằng API backend của bạn
-
-    async function generateLink() {
-      const link = document.getElementById("productLink").value.trim();
-      const resultBox = document.getElementById("result");
-      const loading = document.getElementById("loading");
-
-      if (!link.includes("shopee.vn")) {
-        alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
-        return;
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Link Shopee Affiliate</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9fafb;
+        text-align: center;
+        padding: 50px 20px;
       }
+      h1 {
+        color: #ff5722;
+        margin-bottom: 20px;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 500px;
+        margin: auto;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+      input, button {
+        padding: 12px;
+        margin: 10px 0;
+        width: 90%;
+        font-size: 16px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
+      button {
+        background: #ff5722;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #e64a19;
+      }
+      #result {
+        margin-top: 20px;
+        font-weight: bold;
+        color: green;
+        word-break: break-all;
+      }
+      #copyBtn {
+        margin-top: 10px;
+        padding: 8px 16px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: none;
+      }
+      #copyBtn:hover {
+        background: #388E3C;
+      }
+    </style>
+  </head>
 
-      loading.style.display = "block";
-      resultBox.style.display = "none";
+  <body>
+    <div class="container">
+      <h1>🔗 Tạo Link Shopee Affiliate</h1>
+      <p>Dán link sản phẩm Shopee vào đây, hệ thống sẽ trả về link Affiliate của bạn.</p>
 
-      try {
-        const res = await fetch(`${API_URL}?url=${encodeURIComponent(link)}`);
-        const data = await res.json();
+      <input type="text" id="productLink" placeholder="Dán link sản phẩm Shopee tại đây"><br>
+      <button onclick="generateLink()">Tạo Link</button>
 
-        loading.style.display = "none";
+      <div id="result"></div>
+      <button id="copyBtn" onclick="copyLink()">📋 Copy Link</button>
+    </div>
 
-        if (!data || data.error) {
-          resultBox.style.display = "block";
-          resultBox.innerHTML = `<p style="color:red;">❌ Không tạo được link! ${data.error || ""}</p>`;
+    <script>
+      // Affiliate ID của bạn
+      const affiliateID = "17337560220";
+      let generatedLink = "";
+
+      function generateLink() {
+        let originalLink = document.getElementById("productLink").value.trim();
+
+        if (!originalLink.includes("shopee")) {
+          alert("⚠️ Hãy nhập đúng link sản phẩm Shopee!");
           return;
         }
 
-        const product = data.data || data; // tuỳ backend bạn trả về
+        // Thêm aff_id vào link Shopee
+        if (originalLink.includes("?")) {
+          generatedLink = originalLink + "&aff_id=" + affiliateID;
+        } else {
+          generatedLink = originalLink + "?aff_id=" + affiliateID;
+        }
 
-        resultBox.style.display = "block";
-        resultBox.innerHTML = `
-          <div class="product-info">
-            <img src="${product.image || 'https://via.placeholder.com/80'}" alt="Sản phẩm">
-            <div>
-              <b>${product.name || 'Sản phẩm không rõ'}</b><br>
-              <span>${product.price || ''}</span><br>
-              <small>🏪 ${product.shop || ''}</small>
-            </div>
-          </div>
-          <hr style="opacity: 0.3; margin: 10px 0;">
-          ✅ <b>Link Affiliate:</b><br>
-          <a href="${product.affiliate_link || product.url}" target="_blank" style="color:#ff5722;">${product.affiliate_link || product.url}</a><br>
-          <button class="copy-btn" onclick="copyLink('${product.affiliate_link || product.url}')">📋 Copy Link</button>
-        `;
-      } catch (err) {
-        console.error(err);
-        loading.style.display = "none";
-        resultBox.style.display = "block";
-        resultBox.innerHTML = `<p style="color:red;">⚠️ Lỗi kết nối API!</p>`;
+        document.getElementById("result").innerHTML = 
+          `✅ Link Affiliate đã tạo:<br><a href="${generatedLink}" target="_blank">${generatedLink}</a>`;
+        document.getElementById("copyBtn").style.display = "inline-block";
       }
-    }
 
-    function copyLink(link) {
-      navigator.clipboard.writeText(link);
-      alert("✅ Link đã được copy!");
-    }
-  </script>
-</body>
+      function copyLink() {
+        navigator.clipboard.writeText(generatedLink).then(() => {
+          alert("📋 Link đã được copy!");
+        });
+      }
+    </script>
+  </body>
 </html>
