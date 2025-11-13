@@ -4,18 +4,20 @@ export default async function handler(req, res) {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: "URL không hợp lệ" });
 
-  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k";
+  const NOX_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5";
 
   try {
     const response = await axios.post(
-      "http://api.noxapi.com/v1/shopee/item_detail_by_url",
+      "https://api.noxapi.com/v1/shopee/item_detail_by_url", // ✅ HTTPS
       { url },
       {
         headers: {
           Authorization: `Bearer ${NOX_API_KEY}`,
           "Content-Type": "application/json",
           Accept: "application/json",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // 🎯 thêm User-Agent
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Host": "api.noxapi.com", // ✅ thêm
+          "Origin": "https://api.noxapi.com", // ✅ thêm
         },
         timeout: 30000,
       }
