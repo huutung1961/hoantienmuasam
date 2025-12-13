@@ -1,9 +1,8 @@
 {
-  "name": "api",
-  "version": "1.0.0",
+  "name": "shopee-affiliate-tool",
+  "private": true,
   "type": "module",
   "dependencies": {
-    "puppeteer-core": "10.4.0",
-    "chrome-aws-lambda": "10.1.0"
+    "axios": "^1.6.0"
   }
 }
