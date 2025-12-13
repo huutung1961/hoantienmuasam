@@ -15,11 +15,11 @@ export default async function handler(req, res) {
 
   try {
     const response = await axios.post(
-      // ✅ DOMAIN ĐÚNG
+      // ✅ DOMAIN DUY NHẤT HỢP LỆ
       "https://noxapi.com/v1/shopee/item_detail_by_url",
       {
-        // ✅ FIELD ĐÚNG THEO DOCS
-        url: url
+        // ✅ FIELD ĐÚNG THEO DOC
+        url
       },
       {
         headers: {
@@ -31,14 +31,14 @@ export default async function handler(req, res) {
       }
     );
 
-    if (!response.data?.data) {
+    const item = response.data?.data;
+    if (!item) {
       return res.status(502).json({
-        error: "NOX không trả dữ liệu",
+        error: "NOX không trả data",
         raw: response.data
       });
     }
 
-    const item = response.data.data;
     const price = item.price_info?.price ?? 0;
 
     return res.json({
@@ -50,10 +50,9 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("🔥 SERVER ERROR:", err.response?.data || err.message);
-
+    console.error("🔥 NOX ERROR:", err.response?.data || err.message);
     return res.status(500).json({
-      error: "Server error",
+      error: "NOX API lỗi",
       detail: err.response?.data || err.message
     });
   }
