@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       { url },
       {
         headers: {
-          Authorization: `Bearer YOUR_NOX_API_KEY`,
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k`,
           "Content-Type": "application/json"
         },
         timeout: 20000
