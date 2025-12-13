@@ -1,39 +1,44 @@
 import axios from "axios";
 
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST allowed" });
+  }
+
+  const { url } = req.body || {};
+
+  if (!url || !url.includes("shopee.vn/product")) {
+    return res.status(400).json({
+      error: "Link phải dạng shopee.vn/product/SHOPID/ITEMID"
+    });
+  }
+
   try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Only POST allowed" });
-    }
-
-    const { url } = req.body || {};
-
-    if (!url || !url.includes("shopee.vn/product")) {
-      return res.status(400).json({
-        error: "Link phải dạng shopee.vn/product/SHOPID/ITEMID"
-      });
-    }
-
     const response = await axios.post(
-      "https://api.noxapi.com/v1/shopee/item_detail_by_url",
+      // ✅ DOMAIN ĐÚNG
+      "https://noxapi.com/v1/shopee/item_detail_by_url",
       {
-        item_url: url   // ⚠️ RẤT QUAN TRỌNG
+        // ✅ FIELD ĐÚNG THEO DOCS
+        url: url
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.NOX_API_KEY}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Accept: "application/json"
         },
         timeout: 20000
       }
     );
 
-    const item = response.data?.data;
-
-    if (!item) {
-      return res.json({ error: "NOX không trả dữ liệu" });
+    if (!response.data?.data) {
+      return res.status(502).json({
+        error: "NOX không trả dữ liệu",
+        raw: response.data
+      });
     }
 
+    const item = response.data.data;
     const price = item.price_info?.price ?? 0;
 
     return res.json({
@@ -45,11 +50,11 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error("🔥 SERVER ERROR:", err);
+    console.error("🔥 SERVER ERROR:", err.response?.data || err.message);
 
     return res.status(500).json({
       error: "Server error",
-      message: err.message
+      detail: err.response?.data || err.message
     });
   }
 }
