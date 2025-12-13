@@ -15,23 +15,29 @@ export default async function handler(req, res) {
 
   try {
     const response = await axios.post(
-      // ✅ DOMAIN DUY NHẤT HỢP LỆ
+      // ✅ DOMAIN ĐÚNG CERT
       "https://noxapi.com/v1/shopee/item_detail_by_url",
       {
         // ✅ FIELD ĐÚNG THEO DOC
-        url
+        item_url: url
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.NOX_API_KEY}`,
           "Content-Type": "application/json",
-          Accept: "application/json"
+          Accept: "application/json",
+
+          // ✅ BẮT BUỘC – FIX CSRF
+          "User-Agent": "Mozilla/5.0",
+          Origin: "https://noxapi.com",
+          Referer: "https://noxapi.com/"
         },
         timeout: 20000
       }
     );
 
     const item = response.data?.data;
+
     if (!item) {
       return res.status(502).json({
         error: "NOX không trả data",
