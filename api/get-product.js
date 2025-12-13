@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 export default async function handler(req, res) {
@@ -8,28 +7,35 @@ export default async function handler(req, res) {
 
   const { url } = req.body;
 
-  if (!url || !url.includes("shopee.vn/product")) {
+  if (!url || !/shopee\.vn\/product\/\d+\/\d+/.test(url)) {
     return res.status(400).json({
-      error: "Link phải dạng shopee.vn/product/SHOPID/ITEMID"
+      error: "Link phải dạng shopee.vn/product/SHOP_ID/ITEM_ID"
     });
   }
 
   try {
+    console.log("CALL NOX:", url);
+
     const response = await axios.post(
       "https://api.noxapi.com/v1/shopee/item_detail_by_url",
-      { url },
+      {
+        item_url: url
+      },
       {
         headers: {
           Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3NjI5MzEyODEsInN1YiI6MTAzMH0.SoVD1tSRF74AHS4tduN49SuKp8qhxWXO5OHzHbvhS5k`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Accept: "application/json"
         },
         timeout: 20000
       }
     );
 
+    console.log("NOX RESPONSE:", response.data);
+
     const item = response.data?.data;
     if (!item) {
-      return res.json({ error: "Không có dữ liệu từ NOX" });
+      return res.json({ error: "NOX không trả dữ liệu sản phẩm" });
     }
 
     const price = item.price_info?.price ?? 0;
@@ -44,7 +50,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error(err.response?.data || err.message);
+    console.error("NOX ERROR:", err.response?.data || err.message);
     res.status(500).json({ error: "NOX API lỗi" });
   }
 }
