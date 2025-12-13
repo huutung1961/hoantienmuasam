@@ -1,6 +1,6 @@
-const axios = require("axios");
+import axios from "axios";
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Only POST allowed" });
@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
     const response = await axios.post(
       "https://api.noxapi.com/v1/shopee/item_detail_by_url",
       {
-        item_url: url   // ⚠️ QUAN TRỌNG
+        item_url: url   // ⚠️ RẤT QUAN TRỌNG
       },
       {
         headers: {
@@ -48,8 +48,8 @@ module.exports = async function handler(req, res) {
     console.error("🔥 SERVER ERROR:", err);
 
     return res.status(500).json({
-      error: "Server crash",
+      error: "Server error",
       message: err.message
     });
   }
-};
+}
