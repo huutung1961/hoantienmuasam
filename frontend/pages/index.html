@@ -1,1 +1,51 @@
 
+<input id="link" placeholder="Dán link Shopee dạng /product/..." />
+<button onclick="analyze()">Phân tích sản phẩm</button>
+<div id="result"></div>
+<button id="affBtn" style="display:none" onclick="openAffiliate()">
+  👉 Tạo link Affiliate Shopee
+</button>
+
+<script>
+let currentLink = "";
+
+async function analyze() {
+  const link = document.getElementById("link").value.trim();
+  if (!link.includes("shopee.vn/product")) {
+    alert("Link không hợp lệ");
+    return;
+  }
+
+  currentLink = link;
+  document.getElementById("result").innerHTML = "⏳ Đang xử lý...";
+
+  const res = await fetch("/api/get-product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: link })
+  });
+
+  const data = await res.json();
+  if (data.error) {
+    document.getElementById("result").innerText = "❌ " + data.error;
+    return;
+  }
+
+  document.getElementById("result").innerHTML = `
+    <h3>${data.title}</h3>
+    <p>Giá: ${data.price.toLocaleString()}đ</p>
+    <p>Hoa hồng ước tính: ${data.commission.toLocaleString()}đ</p>
+    ${data.image ? `<img src="${data.image}" width="100%">` : ""}
+  `;
+
+  document.getElementById("affBtn").style.display = "block";
+}
+
+function openAffiliate() {
+  window.open(
+    "https://affiliate.shopee.vn/offer/product?url=" +
+      encodeURIComponent(currentLink),
+    "_blank"
+  );
+}
+</script>
