@@ -1,100 +1,209 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Shopee Affiliate Tool</title>
-  <style>
-    body {
-      font-family: Arial;
-      background: #f5f5f5;
-      padding: 40px;
-      text-align: center;
-    }
-    .box {
-      background: white;
-      max-width: 500px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.1);
-    }
-    input, button {
-      width: 90%;
-      padding: 12px;
-      margin: 10px 0;
-      font-size: 16px;
-    }
-    button {
-      background: #ff5722;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    button:hover {
-      background: #e64a19;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    .price {
-      color: green;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Shopee Affiliate Tool</title>
+
+<style>
+:root {
+  --orange: #ff5722;
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #fff7ed, #f4f6f8);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+
+.card {
+  background: var(--card);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 25px 50px rgba(0,0,0,.08);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--orange);
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.primary {
+  background: var(--orange);
+  color: white;
+}
+
+.primary:hover {
+  opacity: .9;
+}
+
+.secondary {
+  background: #10b981;
+  color: white;
+  width: 100%;
+  margin-top: 14px;
+}
+
+.result {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.price {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+img {
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 14px;
+}
+
+.loading {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 14px;
+}
+</style>
 </head>
 
 <body>
-  <div class="box">
-    <h2>🔗 Shopee Affiliate Tool</h2>
+<div class="card">
+  <h1>🔗 Shopee Affiliate Tool</h1>
+  <p class="subtitle">
+    Dán link sản phẩm Shopee (dạng <b>/product/SHOP_ID/ITEM_ID</b>)
+  </p>
 
-    <input id="link" placeholder="Dán link sản phẩm Shopee">
-    <button onclick="analyze()">Phân tích sản phẩm</button>
-
-    <div id="result"></div>
-
-    <button id="affiliateBtn" style="display:none" onclick="openAffiliate()">
-      👉 Tạo link Affiliate Shopee
+  <div class="input-group">
+    <input
+      id="productLink"
+      placeholder="https://shopee.vn/product/88201679/22432100121"
+    />
+    <button class="primary" onclick="analyzeProduct()">
+      Phân tích
     </button>
   </div>
+
+  <div id="result" class="result"></div>
+
+  <button
+    id="affiliateBtn"
+    class="secondary"
+    onclick="createAffiliate()"
+    style="display:none"
+  >
+    👉 Tạo link Affiliate Shopee
+  </button>
+</div>
 
 <script>
 let currentLink = "";
 
-async function analyze() {
-  const link = document.getElementById("link").value.trim();
-  if (!link.includes("shopee")) {
-    alert("Nhập link Shopee hợp lệ");
+async function analyzeProduct() {
+  const link = document.getElementById("productLink").value.trim();
+  const result = document.getElementById("result");
+
+  if (!/shopee\.vn\/product\/\d+\/\d+/.test(link)) {
+    result.innerHTML =
+      "<div class='error'>❌ Link không đúng định dạng</div>";
     return;
   }
 
   currentLink = link;
-  document.getElementById("result").innerHTML = "⏳ Đang xử lý...";
+  result.innerHTML =
+    "<div class='loading'>⏳ Đang phân tích sản phẩm...</div>";
 
-  const res = await fetch(`/api/get-product?url=${encodeURIComponent(link)}`);
-  const data = await res.json();
+  try {
+    const res = await fetch("/api/get-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: link })
+    });
 
-  if (data.error) {
-    document.getElementById("result").innerHTML = "❌ Lỗi";
-    return;
+    const data = await res.json();
+
+    if (data.error) {
+      result.innerHTML =
+        "<div class='error'>❌ " + data.error + "</div>";
+      return;
+    }
+
+    result.innerHTML = `
+      <h3>${data.title}</h3>
+      <div class="price">${data.price.toLocaleString()}đ</div>
+      <p>Hoa hồng ước tính: <b>${data.commission.toLocaleString()}đ</b></p>
+      ${data.image ? `<img src="${data.image}" />` : ""}
+    `;
+
+    document.getElementById("affiliateBtn").style.display = "block";
+
+  } catch (e) {
+    result.innerHTML =
+      "<div class='error'>❌ Không thể lấy dữ liệu</div>";
   }
-
-  document.getElementById("result").innerHTML = `
-    <h3>${data.name}</h3>
-    <p class="price">Giá: ${data.price.toLocaleString()}đ</p>
-    <p>Hoa hồng ước tính: ${data.commission.toLocaleString()}đ</p>
-    ${data.images[0] ? `<img src="${data.images[0]}">` : ""}
-  `;
-
-  document.getElementById("affiliateBtn").style.display = "block";
 }
 
-function openAffiliate() {
-  const encoded = encodeURIComponent(currentLink);
+function createAffiliate() {
   window.open(
-    `https://affiliate.shopee.vn/offer/product?url=${encoded}`,
+    "https://affiliate.shopee.vn/offer/product?url=" +
+      encodeURIComponent(currentLink),
     "_blank"
   );
 }
